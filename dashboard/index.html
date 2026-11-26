@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board Room</title>
+<style>
+/* Mission Control theme: one look for all four dashboards. No external files. */
+:root {
+  --page: #0a0e1f; --card: rgba(23, 30, 58, .82); --solid: #171e3a; --input: #0e1430;
+  --line: rgba(160, 175, 255, .16); --text: #eef0ff; --soft: #a7b0d6;
+  --violet: #7c6cff; --cyan: #35d6ee; --good: #3ddc97; --mid: #ffc857; --bad: #ff7a85; --warn: #ffc857;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; color: var(--text); font-family: "Segoe UI", system-ui, Arial, sans-serif; background:
+  radial-gradient(900px 500px at 8% -8%, rgba(124, 108, 255, .30), transparent 65%),
+  radial-gradient(800px 500px at 100% 4%, rgba(53, 214, 238, .18), transparent 65%),
+  radial-gradient(1.5px 1.5px at 20px 30px, rgba(255,255,255,.35), transparent 60%) 0 0 / 170px 150px,
+  radial-gradient(1px 1px at 90px 100px, rgba(255,255,255,.28), transparent 60%) 0 0 / 130px 190px,
+  var(--page); background-attachment: fixed; }
+
+header { max-width: 1150px; margin: 0 auto; padding: 26px 20px 6px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+header .logo { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--violet), var(--cyan)); box-shadow: 0 8px 30px rgba(124, 108, 255, .45); }
+header .logo svg { width: 28px; height: 28px; }
+header h1 { margin: 0; font-size: 30px; letter-spacing: .3px;
+  background: linear-gradient(90deg, #ffffff, #b9c4ff 55%, var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+header p { margin: 3px 0 0; color: var(--soft); font-size: 14px; }
+header .who { margin-left: auto; border: 1px solid var(--line); border-radius: 30px; padding: 7px 16px; font-size: 13px;
+  color: var(--cyan); background: rgba(53, 214, 238, .08); }
+
+main { max-width: 1150px; margin: 0 auto; padding: 18px 20px 40px; display: grid; gap: 18px; }
+.row { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.card { position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+  padding: 20px 22px; box-shadow: 0 18px 45px rgba(0, 0, 0, .35); }
+.card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: linear-gradient(90deg, var(--violet), var(--cyan), transparent 85%); }
+.card h2 { margin: 0 0 16px; font-size: 12px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--soft); }
+
+.field { display: grid; grid-template-columns: 160px 1fr; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; color: var(--soft); }
+input, select { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--input);
+  color: var(--text); font: inherit; outline: none; transition: border-color .15s, box-shadow .15s; }
+input:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53, 214, 238, .22); }
+.ticks { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; font-size: 13px; }
+.tick { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 30px; border: 1px solid var(--line); cursor: pointer; }
+.tick:has(input:checked) { border-color: var(--violet); background: rgba(124, 108, 255, .20); }
+.tick input { width: auto; accent-color: var(--violet); }
+button { border: 0; border-radius: 12px; padding: 12px 26px; font: 600 14px "Segoe UI", system-ui, sans-serif; color: #fff; cursor: pointer;
+  background: linear-gradient(120deg, #6a55f5, #2f6df0); box-shadow: 0 10px 24px rgba(90, 90, 245, .45); transition: transform .12s, filter .12s; }
+button:hover { transform: translateY(-1px); filter: brightness(1.12); }
+button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+
+.notice { border: 1px dashed var(--warn); color: var(--warn); background: rgba(255, 200, 87, .07); border-radius: 12px; padding: 14px; font-size: 14px; }
+.muted { color: var(--soft); font-size: 13px; }
+.badge { display: inline-block; border-radius: 30px; padding: 5px 14px; font-size: 12px; font-weight: 700; color: #07101f; }
+.good { background: var(--good); } .mid { background: var(--mid); } .bad { background: var(--bad); }
+.big { font-size: 30px; font-weight: 700; margin: 8px 0; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { position: sticky; top: 0; background: var(--solid); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--soft); }
+th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); }
+tbody tr:hover td, table tr:hover td { background: rgba(124, 108, 255, .10); }
+.scroll { max-height: 320px; overflow: auto; }
+
+.meter { margin-bottom: 14px; font-size: 14px; }
+.meter .label { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--soft); }
+.meter .label b { color: var(--text); font-size: 18px; }
+.meter .track { height: 10px; border-radius: 10px; background: rgba(160, 175, 255, .13); overflow: hidden; }
+.meter .fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--violet), var(--cyan)); }
+.meter.baseline .fill { background: #6f789c; }
+.centre { text-align: center; }
+.verdict { font-size: 24px; font-weight: 700; margin: 10px 0; }
+.price { margin: 18px 0 10px; padding: 14px; border-radius: 14px; border: 1px solid var(--line);
+  background: linear-gradient(135deg, rgba(124, 108, 255, .22), rgba(53, 214, 238, .12)); }
+.price .label { font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--soft); }
+.price .value { font-size: 36px; font-weight: 800; margin-top: 4px; }
+.waiting { padding: 50px 0; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; }
+.number { font-size: 44px; font-weight: 800; line-height: 1.1; }
+.chart { width: 100%; display: block; }
+@media (max-width: 560px) { .field { grid-template-columns: 1fr; gap: 4px; } header .who { margin-left: 0; } }
+
+.kpis { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.kpi { text-align: center; }
+.kpi .number { font-size: 52px; background: linear-gradient(90deg, #ffffff, var(--cyan)); -webkit-background-clip: text;
+  background-clip: text; color: transparent; }
+.bar { display: grid; grid-template-columns: 120px 1fr 90px; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; }
+.bar .amount { color: var(--soft); text-align: right; font-variant-numeric: tabular-nums; }
+.bar .track { height: 10px; border-radius: 10px; background: rgba(160, 175, 255, .13); overflow: hidden; }
+.bar .fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--violet), var(--cyan)); }
+.chart rect:hover { filter: brightness(1.25); }
+#orbits { max-height: 380px; padding-right: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 20h16M7 20v-7M12 20V5M17 20v-11"/></svg></div>
+  <div><h1>Board Room</h1><p>How often do boosters land, and how much risk is in a bid?</p></div>
+  <span class="who">Finance Director</span>
+</header>
+<main>
+  <div id="kpis" class="kpis"></div>
+  <section class="card"><h2>Landing rate by year</h2><div id="years"></div></section>
+  <div class="row">
+    <section class="card"><h2>By launch site</h2><div id="sites"></div></section>
+    <section class="card"><h2>By orbit</h2><div id="orbits" class="scroll"></div></section>
+  </div>
+  <div class="row">
+    <section class="card"><h2>Bid risk check</h2><div id="form"></div><button id="go">Check this bid</button></section>
+    <section class="card"><h2>Risk on this bid</h2><div id="answer" class="centre"><p class="muted waiting">Check a bid to see the expected price.</p></div></section>
+  </div>
+  <section class="card"><h2>How far to trust it</h2><div id="metrics"></div></section>
+</main>
+<script>
+const $ = (selector) => document.querySelector(selector);
+
+function el(tag, props, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props || {})) {
+    if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value);
+  }
+  for (const child of children.flat()) if (child !== null && child !== undefined) node.append(child);
+  return node;
+}
+
+function svg(tag, props, text) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [key, value] of Object.entries(props || {})) node.setAttribute(key, value);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+async function call(url, body) {
+  const options = body ? {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : {};
+  try {
+    const response = await fetch(url, options);
+    let data = null;
+    try { data = await response.json(); } catch (error) { data = null; }
+    return {status: response.status, data};
+  } catch (error) {
+    return {status: 0, data: null};
+  }
+}
+
+function problem(endpoint, reply) {
+  let text = "The API did not answer. Is it running?";
+  if (reply.status === 404 || reply.status === 405) text = "Not built yet: " + endpoint;
+  else if (reply.status === 422) text = "Check the input: " + Object.entries((reply.data && reply.data.fields) || {}).map(([f, m]) => f + " " + m).join("; ");
+  else if (reply.status === 503) text = (reply.data && reply.data.message) || "No model is trained yet.";
+  else if (reply.status >= 500) text = "The API crashed. Look at its terminal.";
+  else if (reply.status === 200) text = endpoint + " answered, but not in the agreed format. See docs/api.md.";
+  return el("div", {class: "notice"}, text);
+}
+
+// show the answer with draw(data), or say clearly what is wrong
+function show(box, endpoint, reply, draw) {
+  box.replaceChildren();
+  if (reply.status !== 200) { box.append(problem(endpoint, reply)); return false; }
+  try { draw(reply.data); return true; }
+  catch (error) { console.error(error); box.replaceChildren(problem(endpoint, reply)); return false; }
+}
+
+const pct = (value) => Math.round(value * 100) + "%";
+const money = (value) => (value === null || value === undefined) ? "no price" : "USD " + value + " M";
+const need = (value) => { if (value === undefined) throw new Error("missing field"); return value; };
+
+async function getOptions() {
+  const reply = await call("/options");
+  return reply.status === 200 ? reply.data : {orbits: ["LEO", "GTO"], launch_sites: ["CCAFS SLC 40"]};
+}
+
+function missionForm(options, start) {
+  const value = Object.assign({payload_mass_kg: 5500, orbit: "GTO", launch_site: options.launch_sites[0],
+                               block: 5, flights: 1, reused: false, grid_fins: true, legs: true}, start || {});
+  const inputs = {};
+  const select = (name, list) => (inputs[name] = el("select", {}, list.map((item) => {
+    const option = el("option", {}, String(item));
+    if (String(item) === String(value[name])) option.selected = true;
+    return option;
+  })));
+  const number = (name) => (inputs[name] = el("input", {type: "text", inputmode: "numeric", value: value[name]}));
+  const tick = (name, label) => {
+    inputs[name] = el("input", {type: "checkbox"});
+    inputs[name].checked = value[name];
+    return el("label", {class: "tick"}, inputs[name], " " + label);
+  };
+  const field = (label, control) => el("label", {class: "field"}, el("span", {}, label), control);
+  const node = el("div", {class: "form"},
+    field("Payload mass (kg)", number("payload_mass_kg")),
+    field("Orbit", select("orbit", options.orbits)),
+    field("Launch site", select("launch_site", options.launch_sites)),
+    field("Booster block", select("block", [1, 2, 3, 4, 5])),
+    field("Booster flight number", number("flights")),
+    el("div", {class: "ticks"}, tick("reused", "Flown before"), tick("grid_fins", "Grid fins"), tick("legs", "Legs")));
+  const asNumber = (text) => (text.trim() !== "" && Number.isFinite(Number(text))) ? Number(text) : text;
+  const read = () => ({
+    payload_mass_kg: asNumber(inputs.payload_mass_kg.value), orbit: inputs.orbit.value,
+    launch_site: inputs.launch_site.value, block: Number(inputs.block.value), flights: asNumber(inputs.flights.value),
+    reused: inputs.reused.checked, grid_fins: inputs.grid_fins.checked, legs: inputs.legs.checked});
+  return {node, read, inputs};
+}
+
+async function showMetrics(box) {
+  const reply = await call("/metrics");
+  show(box, "GET /metrics", reply, (data) => {
+    if (data.note) { box.append(el("p", {}, data.note)); return; }
+    box.append(
+      el("p", {}, "Correct on " + pct(need(data.accuracy)) + " of the " + need(data.n_test) + " most recent launches."),
+      el("p", {}, "Always giving the most common answer: " + pct(need(data.baseline_accuracy)) + "."));
+  });
+}
+
+// shared by the themed dashboards; loaded after common.js
+async function showMetrics(box) {
+  const reply = await call("/metrics");
+  show(box, "GET /metrics", reply, (data) => {
+    if (data.note) { box.append(el("p", {}, data.note)); return; }
+    const meter = (label, value, kind) => {
+      const fill = el("div", {class: "fill"});
+      fill.style.width = (value * 100) + "%";
+      return el("div", {class: "meter " + kind}, el("div", {class: "label"}, el("span", {}, label), el("b", {}, pct(value))),
+                el("div", {class: "track"}, fill));
+    };
+    box.append(meter("This model, correct answers", need(data.accuracy), ""),
+               meter("Always giving the most common answer", need(data.baseline_accuracy), "baseline"),
+               el("p", {class: "muted"}, "Tested on the " + need(data.n_test) + " most recent launches."));
+  });
+}
+
+const priceTile = (value) => el("div", {class: "price"}, el("div", {class: "label"}, "Expected launch price"),
+  el("div", {class: "value"}, money(value)));
+
+const certaintyBadge =(level) => el("span", {class: "badge " + (level === "high" ? "good" : level === "medium" ? "mid" : "bad")},
+  (level === "high" ? "● ● ● " : level === "medium" ? "● ● ○ " : "● ○ ○ ") + level + " certainty");
+
+function bars(box, rows, key) {
+  rows.forEach((row) => {
+    const rate = need(row.landed) / need(row.launches);
+    const fill = el("div", {class: "fill"});
+    fill.style.width = (rate * 100) + "%";
+    box.append(el("div", {class: "bar", title: row.landed + " of " + row.launches + " landed"}, el("span", {}, String(need(row[key]))),
+                  el("div", {class: "track"}, fill), el("span", {class: "amount"}, pct(rate) + " of " + row.launches)));
+  });
+}
+
+function years(box, rows) {
+  const w = 1000, h = 250, base = 205, step = (w - 60) / rows.length, wide = Math.min(step * 0.55, 54);
+  const chart = svg("svg", {viewBox: "0 0 " + w + " " + h, class: "chart", role: "img", "aria-label": "Landing rate by year"});
+  const paint = svg("linearGradient", {id: "rise", x1: 0, y1: 0, x2: 0, y2: 1});
+  paint.append(svg("stop", {offset: "0%", "stop-color": "#35d6ee"}), svg("stop", {offset: "100%", "stop-color": "#7c6cff"}));
+  chart.append(paint);
+  rows.forEach((row, i) => {
+    const rate = need(row.landed) / need(row.launches);
+    const middle = 30 + i * step + step / 2, height = rate * 165;
+    const bar = svg("rect", {x: middle - wide / 2, y: base - height, width: wide, height: height, fill: "url(#rise)", rx: 4});
+    bar.append(svg("title", {}, need(row.year) + ": " + row.landed + " of " + row.launches + " landed"));
+    chart.append(
+      svg("rect", {x: middle - wide / 2, y: base - 165, width: wide, height: 165, fill: "#a0afff", "fill-opacity": 0.10, rx: 4}),
+      bar,
+      svg("text", {x: middle, y: base - 173, "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#eef0ff"}, pct(rate)),
+      svg("text", {x: middle, y: base + 20, "text-anchor": "middle", "font-size": 14, fill: "#eef0ff"}, String(row.year)),
+      svg("text", {x: middle, y: base + 37, "text-anchor": "middle", "font-size": 11, fill: "#a7b0d6"}, row.launches + (row.launches === 1 ? " launch" : " launches")));
+  });
+  box.append(chart);
+}
+
+async function summary() {
+  const reply = await call("/summary");
+  const tile = (value, label) => el("section", {class: "card kpi"}, el("div", {class: "number"}, value), el("div", {class: "muted"}, label));
+  show($("#kpis"), "GET /summary", reply, (d) => $("#kpis").append(
+    tile(String(need(d.launches)), "launches in the data"), tile(String(need(d.landed)), "first stages landed"), tile(pct(need(d.landing_rate)), "landing rate")));
+  show($("#years"), "GET /summary", reply, (d) => years($("#years"), need(d.by_year)));
+  show($("#sites"), "GET /summary", reply, (d) => bars($("#sites"), need(d.by_site), "site"));
+  show($("#orbits"), "GET /summary", reply, (d) => bars($("#orbits"), need(d.by_orbit), "orbit"));
+}
+
+(async () => {
+  const form = missionForm(await getOptions());
+  $("#form").append(form.node);
+  $("#go").addEventListener("click", async () => {
+    const box = $("#answer");
+    show(box, "POST /predict", await call("/predict", form.read()), (d) => {
+      box.append(priceTile(d.price_usd_million),
+        el("div", {class: "verdict"}, "Chance the booster lands: " + pct(need(d.probability))),
+        certaintyBadge(need(d.certainty)),
+        el("p", {class: "muted"}, d.price_note || d.price_basis || ""));
+    });
+  });
+  summary();
+  showMetrics($("#metrics"));
+})();
+</script>
+</body>
+</html>
