@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+
+# confidential: never commit the real price figures
+config/prices.local.json
+
+# built by the code, so not committed
+data/processed/*
+!data/processed/.gitkeep
+models/*
+!models/.gitkeep
