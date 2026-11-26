@@ -16,25 +16,41 @@ def load_raw(path=RAW_API_FILE):
 
 def check_columns(df):
     """Raise ValueError, naming the column, if a column the clean table needs is missing."""
-    # TODO: which of CLEAN_COLUMNS must already be in the raw file? (Class is not one of them.)
-    raise NotImplementedError
+    required_columns = [col for col in CLEAN_COLUMNS if col != "Class"]
+    for col in required_columns:
+        if col not in df.columns:
+            raise ValueError(f"Missing required column: {col}")
 
 
 def clean(df):
     """Return the clean table. Do not change the DataFrame that was passed in."""
-    # TODO 1: work on a copy.
-    # TODO 2: find the missing values. Fill the missing PayloadMass. A blank LandingPad stays blank.
-    # TODO 3: add Class: 1 if the first stage landed, 0 if not.
-    #         Look at df["Outcome"].value_counts() first, and read docs/requirements.md.
-    # TODO 4: make Block a whole number and the True/False columns booleans.
-    # TODO 5: return exactly the columns in CLEAN_COLUMNS, in that order.
-    raise NotImplementedError
+    table = df.copy()
+
+    if "PayloadMass" in table.columns:
+        median_mass = table["PayloadMass"].median()
+        table["PayloadMass"] = table["PayloadMass"].fillna(median_mass)
+
+    table["Class"] = table["Outcome"].astype(str).str.startswith("True").astype(int)
+
+    table["Block"] = table["Block"].astype(int)
+    for bool_col in ["Reused", "GridFins", "Legs"]:
+        table[bool_col] = table[bool_col].astype(bool)
+
+    return table[CLEAN_COLUMNS]
 
 
 def build_report(raw, table):
     """Return {"rows_in": int, "rows_out": int, "missing_filled": {column: count}, "notes": [str]}."""
-    # TODO
-    raise NotImplementedError
+    payload_missing = int(raw["PayloadMass"].isnull().sum()) if "PayloadMass" in raw.columns else 0
+    return {
+        "rows_in": int(len(raw)),
+        "rows_out": int(len(table)),
+        "missing_filled": {"PayloadMass": payload_missing},
+        "notes": [
+            f"Filled {payload_missing} missing PayloadMass values.",
+            "Left LandingPad blanks intact.",
+        ],
+    }
 
 
 def main(raw_path=RAW_API_FILE, clean_path=CLEAN_FILE, report_path=QUALITY_FILE):
