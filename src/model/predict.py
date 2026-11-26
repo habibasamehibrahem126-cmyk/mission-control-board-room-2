@@ -1,4 +1,6 @@
 """Model module: answer one prediction (contract C2).   Step 3"""
+from pathlib import Path
+
 import joblib
 import pandas as pd
 
@@ -15,5 +17,11 @@ def predict(mission, model_path=MODEL_FILE):
 
     Raise FileNotFoundError if no model has been trained yet.
     """
-    # TODO: load the saved model with joblib, then use predict_proba on mission_to_row(mission).
-    return 0.5  # stand-in: replace it in step 3
+    path = Path(model_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Model file not found: {path}")
+
+    model = joblib.load(path)
+    row = mission_to_row(mission)
+    probs = model.predict_proba(row)
+    return float(probs[0][1])
