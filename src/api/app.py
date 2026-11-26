@@ -5,6 +5,8 @@ Run:  python -m src.api.app      then open http://127.0.0.1:5001
 The dashboard is ready (dashboard/index.html). Each panel starts to work as soon as
 the endpoint it calls exists. The endpoints are described in docs/api.md.
 """
+import json
+
 from flask import Flask, jsonify, request, send_from_directory
 
 from src.api import rules
@@ -27,11 +29,40 @@ def create_app(model_path=MODEL_FILE, prices_path=PRICES_FILE, metrics_path=METR
     def options():
         return jsonify(orbits=ORBITS, launch_sites=LAUNCH_SITES)
 
-    # TODO (step 5): POST /predict
+    @app.post("/predict")
+    def predict_endpoint():
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify(error="Invalid JSON body"), 400
 
-    # TODO (step 5): GET /metrics
+        errors = rules.validate(data)
+        if errors:
+            return jsonify(errors=errors), 400
 
-    # TODO (step 6): the endpoints of your dashboard
+        try:
+            prob = model.predict(data, model_path=model_path)
+        except FileNotFoundError as exc:
+            return jsonify(error=str(exc)), 500
+
+        prices = rules.load_prices(prices_path)
+        return jsonify(
+            probability=prob,
+            certainty=rules.certainty(prob),
+            expected_price_usd_million=rules.price(prob, prices),
+        )
+
+    @app.get("/metrics")
+    def metrics():
+        try:
+            content = json.loads(metrics_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return jsonify(error="Metrics not found"), 404
+        return jsonify(content)
+
+    @app.get("/summary")
+    def summary():
+        records = load_launches(clean_path)
+        return jsonify(records)
 
     return app
 
